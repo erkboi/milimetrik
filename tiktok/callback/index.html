@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>TikTok Connect · Milimetrik Stüdyo</title>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<main>
+  <nav><a href="../../">Home</a><a href="../../privacy/">Privacy Policy</a><a href="../../terms/">Terms of Service</a></nav>
+  <h1>TikTok connection</h1>
+  <div id="ok" class="card" hidden>
+    <p id="status">Sending the authorization to Milimetrik Stüdyo on this computer…</p>
+    <p>If the Terminal does not continue by itself, copy this code and paste it into the Terminal window:</p>
+    <span id="code" class="code"></span>
+    <button id="copy" type="button">Copy code</button>
+    <p lang="tr" style="color:var(--muted)">Terminal kendiliğinden devam etmezse kodu kopyalayıp Terminal'e yapıştır ve Enter'a bas.</p>
+  </div>
+  <div id="err" class="card" hidden>
+    <p><strong>TikTok did not grant access.</strong></p>
+    <p id="errmsg"></p>
+    <p>Run <code>./studio tiktok-bagla</code> again to retry.</p>
+  </div>
+  <div id="none" class="card" hidden>
+    <p>This page receives the authorization code after you approve Milimetrik Stüdyo on TikTok. Nothing to show yet.</p>
+  </div>
+  <footer>The code is used once, together with a secret that only the tool has, to get access to the account you approved.
+  It is not stored on this site.</footer>
+</main>
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var code = q.get("code"), state = q.get("state") || "", error = q.get("error");
+    function show(id) { document.getElementById(id).hidden = false; }
+    if (error) {
+      show("err");
+      document.getElementById("errmsg").textContent = error + (q.get("error_description") ? ": " + q.get("error_description") : "");
+      return;
+    }
+    if (!code) { show("none"); return; }
+    show("ok");
+    document.getElementById("code").textContent = code;
+    document.getElementById("copy").onclick = function () {
+      navigator.clipboard.writeText(code).then(function () { document.getElementById("copy").textContent = "Copied ✓"; });
+    };
+    // Hand the code to the local tool (./studio tiktok-bagla listens on 127.0.0.1:53682 while it waits).
+    var local = "http://127.0.0.1:53682/?" + new URLSearchParams({ code: code, state: state }).toString();
+    fetch(local, { mode: "no-cors", targetAddressSpace: "local" }).then(function () {
+      document.getElementById("status").textContent = "Done ✓ — Milimetrik Stüdyo received the authorization. You can close this tab.";
+    }).catch(function () {
+      document.getElementById("status").textContent = "Could not reach the tool on this computer automatically.";
+    });
+    // Remove the code from the address bar and history.
+    history.replaceState(null, "", location.pathname);
+  })();
+</script>
+</body>
+</html>
